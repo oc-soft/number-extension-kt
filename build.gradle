@@ -1,0 +1,177 @@
+
+
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform' version '1.4.10'
+    id 'org.jetbrains.dokka' version '1.4.10.2'
+    id 'maven-publish'
+    id 'signing'
+}
+
+
+group = 'com.github.oc-soft'
+version = '0.1.0'
+ext.pom = [
+    description: 'kotlin number extension library',
+    url: 'https://github.com/oc-soft/number-extension-kt',
+    licenses: [
+        [
+            name: 'ISC'
+        ]
+    ],
+    developers: [
+        [
+            id: 'toshi',
+            name: 'Toshiyuki Ogawa',
+            email: 'toshi@oc-soft.net'
+        ]
+    ],
+    organization: [
+        name: 'oc-soft',
+        url: 'https://oc-soft.net/'
+    ],
+    scm: [
+        connection: 'https://github.com/oc-soft/number-extension-kt.git',
+        developerConnection:
+            'https://github.com/oc-soft/number-extension-kt.git',
+
+        url:
+            'https://github.com/oc-soft/number-extension-kt#Number-extension-extension-for-kotlin'
+    ]
+]
+
+ext.setupPom = {
+    pom ->
+
+    pom.description = ext.pom.description
+    pom.url = ext.pom.url
+    def projPom = ext.pom
+    pom.organization {
+        name = projPom.organization.name
+        url = projPom.organization.url
+    }    
+    pom.scm {
+        connection = projPom.scm.connection
+        developerConnection = projPom.scm.developerConnection
+        url = projPom.scm.url
+    }
+
+    pom.licenses {
+        def licOwner = owner
+        projPom.licenses.each {
+            licItem ->
+            licOwner.license {
+                name = licItem.name  
+            }
+        } 
+    }
+
+    pom.developers {
+        def devOwner = owner
+        projPom.developers.each { 
+            devItem ->
+            devOwner.developer {
+                id = devItem.id
+                name = devItem.name
+                email = devItem.email
+            }
+        }
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+kotlin {
+    jvm()
+    js {
+        browser {
+        }
+    }
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation kotlin('stdlib')
+
+             } 
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test-common')
+                implementation kotlin('test-annotations-common')
+            }
+        }
+        jvmTest {
+            dependencies {
+                implementation kotlin('test-junit')
+            }
+        }
+        jsTest {
+            dependencies {
+                implementation kotlin('test-js')
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+
+    sign publishing.publications.jvm
+    sign publishing.publications.js
+}
+
+
+tasks.withType(org.jetbrains.dokka.gradle.DokkaTask).configureEach {
+    dokkaSourceSets {
+        configureEach {
+            includes.from 'Module.md'
+        }
+    }
+}
+
+
+task(dokkaHtmlJar, type: Jar) {
+    dependsOn dokkaHtml
+    from dokkaHtml.outputDirectory
+    archiveClassifier = 'javadoc'
+}
+
+
+publishing {
+    repositories {
+        maven {
+            name = 'snapshots'
+            url = 'https://oss.sonatype.org/content/repositories/snapshots'
+            credentials {
+                username = project.property('sonatype.username')
+                password = project.property('sonatype.password')
+            }
+        }
+        maven {
+            name = 'release'
+            url =
+                'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+            credentials {
+                username = project.property('sonatype.username')
+                password = project.property('sonatype.password')
+            }
+        }
+    }
+    publications {
+
+        js {
+            setupPom(pom)
+            pom.name = "${project.name}-js"
+            artifact dokkaHtmlJar
+        }
+        jvm {
+            setupPom(pom)
+            pom.name = "${project.name}-jvm"
+            artifact dokkaHtmlJar
+        }
+
+    } 
+}
+
+// vi: se ts=4 sw=4 et: 
