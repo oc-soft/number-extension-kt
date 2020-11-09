@@ -9,7 +9,7 @@ plugins {
 
 
 group = 'com.github.oc-soft'
-version = '0.1.0'
+version = '0.1.1'
 ext.pom = [
     description: 'kotlin number extension library',
     url: 'https://github.com/oc-soft/number-extension-kt',
@@ -117,6 +117,8 @@ kotlin {
 signing {
     useGpgCmd()
 
+    sign publishing.publications.kotlinMultiplatform
+    sign publishing.publications.metadata
     sign publishing.publications.jvm
     sign publishing.publications.js
 }
@@ -159,6 +161,19 @@ publishing {
         }
     }
     publications {
+        kotlinMultiplatform {
+            setupPom(pom)
+            pom.name = "${project.name}"
+            artifact dokkaHtmlJar
+            artifact metadataSourcesJar
+        }
+
+        metadata {
+            setupPom(pom)
+            pom.name = "${project.name}-metadata"
+            artifact dokkaHtmlJar
+        }
+
 
         js {
             setupPom(pom)
